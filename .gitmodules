@@ -1,0 +1,3 @@
+[submodule "math_lang_parser"]
+	path = math_lang_parser
+	url = https://github.com/eba216/MathLang
