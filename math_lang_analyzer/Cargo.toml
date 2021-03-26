@@ -1,5 +1,5 @@
 [package]
-name = "math_lang_parser"
+name = "math_lang_analyzer"
 version = "0.1.0"
 authors = ["Edwin Baeza <baeza.edwin216@gmail.com>"]
 edition = "2018"

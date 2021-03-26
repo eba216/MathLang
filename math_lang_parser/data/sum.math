@@ -1,5 +1,0 @@
-num a 
-a = 5
-num b
-in b
-out a+b

@@ -1,4 +1,6 @@
-mod parsers;
+mod analyzer;
+mod parser;
+mod symbol_table;
 
 fn main() {
     let mut args = std::env::args();
@@ -32,7 +34,7 @@ fn process_file(current_program_path: &str, source_path: &str) {
     let source_code = source_code.unwrap();
 
     let parsed_program;
-    match parsers::parse_program(&source_code) {
+    match parser::parse_program(&source_code) {
         Ok((rest, syntax_tree)) => {
             let trimmed_rest = rest.trim();
             if trimmed_rest.len() > 0 {
@@ -50,5 +52,18 @@ fn process_file(current_program_path: &str, source_path: &str) {
         }
     }
 
-    println!("Parsed program: {:#?}", parsed_program);
+    let analyzed_program;
+    let mut variables = symbol_table::SymbolTable::new();
+    match analyzer::analyze_program(&mut variables, &parsed_program) {
+        Ok(analyzed_tree) => {
+            analyzed_program = analyzed_tree;
+        }
+        Err(err) => {
+            eprintln!("Invalid code in '{}': {}", source_path, err);
+            return;
+        }
+    }
+
+    println!("Symbol table: {:#?}", variables);
+    println!("Analyzed program: {:#?}", analyzed_program);
 }

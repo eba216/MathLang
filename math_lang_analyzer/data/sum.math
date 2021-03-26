@@ -1,0 +1,5 @@
+var a
+a = 5
+var b
+in b
+out a + b

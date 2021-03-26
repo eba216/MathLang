@@ -57,7 +57,7 @@ pub fn parse_program(input: &str) -> IResult<&str, ParsedProgram> {
 }
 
 fn parse_declaration(input: &str) -> IResult<&str, ParsedStatement> {
-    tuple((tag("num"), skip_spaces, parse_identifier))(input)
+    tuple((tag("var"), skip_spaces, parse_identifier))(input)
         .map(|(input, output)| (input, ParsedStatement::Declaration(output.2)))
 }
 
