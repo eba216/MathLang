@@ -35,4 +35,16 @@ impl SymbolTable {
             ))
         }
     }
+    pub fn get_value(&self, handle: usize) -> f64 {
+        self.entries[handle].1
+    }
+    pub fn set_value(&mut self, handle: usize, value: f64) {
+        self.entries[handle].1 = value;
+    }
+    pub fn get_name(&self, handle: usize) -> String {
+        self.entries[handle].0.clone()
+    }
+    pub fn iter(&self) -> std::slice::Iter<(String, f64)> {
+        self.entries.iter()
+    }
 }
