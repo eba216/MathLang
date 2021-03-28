@@ -26,6 +26,12 @@ fn translate_to_rust_term(variables: &SymbolTable, analyzed_term: &AnalyzedTerm)
                 result += " / ";
                 result += &translate_to_rust_factor(variables, &factor.1);
             }
+            TermOperator::Exponent => {
+                result += ".pow";
+                result += &translate_to_rust_factor(variables, &factor.1);
+                result += ""
+
+            }
         }
     }
     result
@@ -43,6 +49,10 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
                 result += " - ";
                 result += &translate_to_rust_term(variables, &term.1);
             }
+            ExprOperator::Modulo => {
+                result += " % ";
+                result += &translate_to_rust_term(variables, &term.1);
+            }
         }
     }
     result
@@ -53,6 +63,12 @@ fn translate_to_rust_statement(
     analyzed_statement: &AnalyzedStatement,
 ) -> String {
     match analyzed_statement {
+        
+        AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
+            format!("let mut _{} = {}", 
+            variables.get_name(*handle), 
+            translate_to_rust_expr(&variables, expr))
+        }
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",
             variables.get_name(*handle),

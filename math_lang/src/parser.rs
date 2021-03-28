@@ -22,12 +22,14 @@ pub enum ParsedFactor<'a> {
 pub enum TermOperator {
     Multiply,
     Divide,
+    Exponent,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ExprOperator {
     Add,
     Subtract,
+    Modulo,
 }
 
 pub type ParsedTerm<'a> = (ParsedFactor<'a>, Vec<(TermOperator, ParsedFactor<'a>)>);
@@ -40,6 +42,7 @@ pub enum ParsedStatement<'a> {
     InputOperation(&'a str),
     OutputOperation(ParsedExpr<'a>),
     Assignment(&'a str, ParsedExpr<'a>),
+    DeclarationToAssignment(&'a str, ParsedExpr<'a>),
 }
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
@@ -47,7 +50,7 @@ pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 pub fn parse_program(input: &str) -> IResult<&str, ParsedProgram> {
     many0(preceded(
         skip_spaces,
-        alt((
+        alt((parse_declaration_to_assigment,
             parse_declaration,
             parse_input_statement,
             parse_output_statement,
@@ -80,6 +83,19 @@ fn parse_assignment(input: &str) -> IResult<&str, ParsedStatement> {
         parse_expr,
     ))(input)
     .map(|(input, output)| (input, ParsedStatement::Assignment(output.0, output.4)))
+}
+
+fn parse_declaration_to_assigment(input: &str) -> IResult<&str, ParsedStatement> {
+    tuple((
+        tag("var"), 
+        skip_spaces,
+        parse_identifier,
+        skip_spaces,
+        tag("="),
+        skip_spaces,
+        parse_expr,
+    ))(input)
+    .map(|(input, output)| (input, ParsedStatement::DeclarationToAssignment(output.2, output.6)))
 }
 
 fn parse_identifier(input: &str) -> IResult<&str, &str> {
@@ -116,6 +132,7 @@ fn parse_term(input: &str) -> IResult<&str, ParsedTerm> {
                 alt((
                     map(char('*'), |_| TermOperator::Multiply),
                     map(char('/'), |_| TermOperator::Divide),
+                    map(char('^'), |_| TermOperator::Exponent),
                 )),
             ),
             parse_factor,
@@ -132,6 +149,7 @@ fn parse_expr(input: &str) -> IResult<&str, ParsedExpr> {
                 alt((
                     map(char('+'), |_| ExprOperator::Add),
                     map(char('-'), |_| ExprOperator::Subtract),
+                    map(tag ("mod"), |_| ExprOperator::Modulo),
                 )),
             ),
             parse_term,

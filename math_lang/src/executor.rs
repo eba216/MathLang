@@ -18,6 +18,7 @@ fn evaluate_term(variables: &SymbolTable, term: &AnalyzedTerm) -> f64 {
         match factor.0 {
             TermOperator::Multiply => result *= evaluate_factor(variables, &factor.1),
             TermOperator::Divide => result /= evaluate_factor(variables, &factor.1),
+            TermOperator::Exponent => result = result.powf(evaluate_factor(variables, &factor.1)),
         }
     }
     result
@@ -29,6 +30,7 @@ fn evaluate_expr(variables: &SymbolTable, expr: &AnalyzedExpr) -> f64 {
         match term.0 {
             ExprOperator::Add => result += evaluate_term(variables, &term.1),
             ExprOperator::Subtract => result -= evaluate_term(variables, &term.1),
+            ExprOperator::Modulo => result %= evaluate_term(variables, &term.1),
         }
     }
     result
@@ -39,10 +41,13 @@ fn execute_statement(variables: &mut SymbolTable, statement: &AnalyzedStatement)
         AnalyzedStatement::Assignment(handle, expr) => {
             variables.set_value(*handle, evaluate_expr(variables, expr));
         }
+        AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
+            variables.set_value(*handle, evaluate_expr(variables, expr));
+        }
         AnalyzedStatement::Declaration(_) => {}
         AnalyzedStatement::InputOperation(handle) => {
             let mut text = String::new();
-            eprint!("Provide Input: ");
+            eprint!("<input>: ");
             std::io::stdin()
                 .read_line(&mut text)
                 .expect("Cannot read line.");

@@ -19,10 +19,13 @@ pub type AnalyzedExpr = (AnalyzedTerm, Vec<(ExprOperator, AnalyzedTerm)>);
 
 #[derive(Debug)]
 pub enum AnalyzedStatement {
+    
     Declaration(usize),
     InputOperation(usize),
     OutputOperation(AnalyzedExpr),
     Assignment(usize, AnalyzedExpr),
+    DeclarationToAssignment(usize, AnalyzedExpr),
+    
 }
 
 pub type AnalyzedProgram = Vec<AnalyzedStatement>;
@@ -82,6 +85,13 @@ fn analyze_statement(
     parsed_statement: &ParsedStatement,
 ) -> Result<AnalyzedStatement, String> {
     match parsed_statement {
+        
+        ParsedStatement::DeclarationToAssignment(identifier, expr) => {
+            variables.insert_symbol(identifier)?;
+            let handle = variables.find_symbol(identifier)?;
+            let analyzed_expr = analyze_expr(variables, expr)?;
+            Ok(AnalyzedStatement::DeclarationToAssignment(handle, analyzed_expr)) 
+        }
         ParsedStatement::Assignment(identifier, expr) => {
             let handle = variables.find_symbol(identifier)?;
             let analyzed_expr = analyze_expr(variables, expr)?;
@@ -91,6 +101,7 @@ fn analyze_statement(
             let handle = variables.insert_symbol(identifier)?;
             Ok(AnalyzedStatement::Declaration(handle))
         }
+       
         ParsedStatement::InputOperation(identifier) => {
             let handle = variables.find_symbol(identifier)?;
             Ok(AnalyzedStatement::InputOperation(handle))
@@ -99,5 +110,6 @@ fn analyze_statement(
             let analyzed_expr = analyze_expr(variables, expr)?;
             Ok(AnalyzedStatement::OutputOperation(analyzed_expr))
         }
+       
     }
 }

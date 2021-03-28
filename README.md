@@ -40,9 +40,9 @@ $cargo run <path/to/.math/file>
 
 ```
 // example.math
-var a
-a = 1
+var a = 1
 var b
 b = a + 2
-out b*(a/2 + 3) - 4 
+out b *(a^2 mod 3) - 4 
+
 ```

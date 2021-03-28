@@ -91,7 +91,7 @@ fn run_interpreter() {
                 variables = symbol_table::SymbolTable::new();
                 eprintln!("Cleared variables.");
             }
-            "vars" => {
+            "variables" => {
                 eprintln!("Variables:");
                 for v in variables.iter() {
                     eprintln!("  {}: {}", v.0, v.1);
@@ -118,7 +118,7 @@ fn run_interpreter() {
 
 fn input_command() -> String {
     let mut text = String::new();
-    eprint!("<input>: ");
+    eprint!("<shell>: ");
     std::io::stdin()
         .read_line(&mut text)
         .expect("Cannot read line.");
