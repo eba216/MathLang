@@ -14,25 +14,25 @@ Finally you can run like so:
 
 For the REPL,
 ```
-$./math_lang/target/debug/math_lang.exe 
+$./math_lang/target/debug/math_lang.exe repl
 ```
 or 
 
 ```
-$cargo run  
+$cargo run repl
 ```
 
 
 To compile MathLang to Rust,
 
 ```
-$./math_lang/target/debug/math_lang.exe <path/to/.math/file>
+$./math_lang/target/debug/math_lang.exe compile <path/to/.math/file>
 ```
 
 or
 
 ```
-$cargo run <path/to/.math/file>
+$cargo run compile <path/to/.math/file>
 ```
 
 

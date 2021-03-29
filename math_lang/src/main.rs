@@ -4,20 +4,44 @@ mod executor;
 mod parser;
 mod symbol_table;
 
+const MATH_SUFFIX: &str = ".math";
+
 fn main() {
 
     let mut args = std::env::args();
     let current_program_path = args.next().unwrap();
-    let source_path = args.next();
-    if source_path.is_none() {
-        run_interpreter();
-    } else {
-        process_file(&current_program_path, &source_path.unwrap());
-    }
+    let option = args.next();
+
+    match option.as_deref() {
+        Some("repl") => run_interpreter(),
+        Some("compile") => {
+            let source_path = args.next();
+            
+            match source_path.as_deref() {
+                Some(file) if file.ends_with(MATH_SUFFIX) => {
+                    process_file(&current_program_path, &source_path.unwrap()); 
+                }
+                Some(_) => interpret(),
+                None => {
+                    eprintln!("Additional argumeng needed: <file.math or string>");
+                    return
+                }
+            }        
+        } 
+        Some(_) => {
+            eprintln!("Command not recognized. Supported commands are -compile <file.math or string> and -repl");
+            return
+        }
+        None => {
+            eprintln!("Additional Command needed. Options are -compile <file.math or string> and -repl");
+            return
+        }
+    } 
+
 }
 
 fn process_file(current_program_path: &str, source_path: &str) {
-    const MATH_SUFFIX: &str = ".math";
+    
     if !source_path.ends_with(MATH_SUFFIX) {
         eprintln!(
             "{}: Invalid argument '{}': It must end with {}",
@@ -77,6 +101,10 @@ fn process_file(current_program_path: &str, source_path: &str) {
     }
 }
 
+fn interpret() {
+
+}
+
 fn run_interpreter() {
     eprintln!("* Math Interactive Interpreter *");
     let mut variables = symbol_table::SymbolTable::new();
@@ -100,20 +128,26 @@ fn run_interpreter() {
             trimmed_command => match parser::parse_program(&trimmed_command) {
                 Ok((rest, parsed_program)) => {
                     if rest.len() > 0 {
+                        eprintln!("Symbol table: {:#?}", &mut variables); 
                         eprintln!("Unparsed input: `{}`.", rest)
                     } else {
                         match analyzer::analyze_program(&mut variables, &parsed_program) {
                             Ok(analyzed_program) => {
-                                executor::execute_program(&mut variables, &analyzed_program)
+                                println!("Analyzed program: {:#?}", &analyzed_program);
+                                executor::execute_program(&mut variables, &analyzed_program)        
+                                
                             }
-                            Err(err) => eprintln!("Error: {}", err),
+                            Err(err) => {eprintln!("Error: {}", err)},
                         }
                     }
                 }
-                Err(err) => eprintln!("Error: {:?}", err),
+               
+                Err(err) =>  eprintln!("Error: {:?}", err),
             },
         }
+
     }
+    
 }
 
 fn input_command() -> String {
