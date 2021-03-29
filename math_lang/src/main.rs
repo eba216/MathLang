@@ -13,27 +13,45 @@ fn main() {
     let option = args.next();
 
     match option.as_deref() {
-        Some("repl") => run_interpreter(),
-        Some("compile") => {
+        Some("--repl") => run_interpreter(),
+        Some("--compile") => {
             let source_path = args.next();
             
             match source_path.as_deref() {
-                Some(file) if file.ends_with(MATH_SUFFIX) => {
-                    process_file(&current_program_path, &source_path.unwrap()); 
-                }
-                Some(_) => interpret(),
+                Some(file) => { 
+                    if file.ends_with(MATH_SUFFIX) {
+                        process_file(&current_program_path, &source_path.unwrap());    
+                    } else {
+                        eprintln!(
+                            "{}: Invalid argument '{}': It must end with {}",
+                            current_program_path, file, MATH_SUFFIX
+                        );
+                        return;
+                    }
+                }  
                 None => {
                     eprintln!("Additional argumeng needed: <file.math or string>");
                     return
                 }
             }        
-        } 
+        }
+        Some("--interpret") => {
+            let program = args.next();
+            match program.as_deref() {
+                Some(program) => { interpret(program)},
+                None => {
+                    eprintln!("Additional argumeng needed: <file.math or string>");
+                    return
+                }
+
+            }
+        }
         Some(_) => {
-            eprintln!("Command not recognized. Supported commands are -compile <file.math or string> and -repl");
+            eprintln!("Command not recognized. Supported commands are --compile <file.math>, --intepret <string> , and --repl");
             return
         }
         None => {
-            eprintln!("Additional Command needed. Options are -compile <file.math or string> and -repl");
+            eprintln!("Additional Command needed. Options are --compile <file.math>, --intepret <string> , and --repl");
             return
         }
     } 
@@ -101,12 +119,35 @@ fn process_file(current_program_path: &str, source_path: &str) {
     }
 }
 
-fn interpret() {
+fn interpret(program:&str) {
+    eprintln!("* Interpreting *\n");
 
+    let mut variables = symbol_table::SymbolTable::new();
+    
+    loop  {
+        let pattern = parser::parse_program(&program);
+        match pattern {
+            Ok((rest, parsed_program)) => { 
+                if rest.len() > 0 {
+                    eprintln!("Unparsed input: `{}`.", rest)
+                } else {
+                    match analyzer::analyze_program(&mut variables, &parsed_program) {
+                        Ok(analyzed_program) => {
+                            executor::execute_program(&mut variables, &analyzed_program);   
+                            break;
+                        }
+                        Err(err) => {eprintln!("Error: {}", err); break;},
+                    }
+                }
+            }
+            Err(err) =>  {eprintln!("Error: {:?}", err); break;},
+        } 
+        break;
+    }
 }
 
 fn run_interpreter() {
-    eprintln!("* Math Interactive Interpreter *");
+    eprintln!("* Math Interactive Interpreter *\n");
     let mut variables = symbol_table::SymbolTable::new();
     loop {
         let command = input_command();
