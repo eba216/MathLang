@@ -19,7 +19,7 @@ $./math_lang/target/debug/math_lang.exe --repl
 or 
 
 ```
-$cargo run --repl
+$cargo run -- --repl
 ``` 
  
 
@@ -32,7 +32,7 @@ $./math_lang/target/debug/math_lang.exe --compile <path/to/.math/file>
 or
 
 ```
-$cargo run --compile <path/to/.math/file>
+$cargo run -- --compile <path/to/.math/file>
 ```
 
 To interpret MathLang,
@@ -44,7 +44,7 @@ $./math_lang/target/debug/math_lang.exe --interpret "program to interpret"
 or
 
 ```
-$cargo run --interpret "program to interpret"
+$cargo run -- --interpret "program to interpret"
 ```
 
 
