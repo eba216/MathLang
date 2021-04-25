@@ -20,4 +20,5 @@ fn main() {
     println!("<output>: {}", _c);
     let mut _d = 1f64 / (_a + 2f64.pow(_b - 3f64)) % _c;
     println!("<output>: {}", _d);
+    println!("<output>: {}", (_d).sin());
 }

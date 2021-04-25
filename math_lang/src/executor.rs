@@ -1,14 +1,15 @@
 use crate::analyzer::{
-    AnalyzedExpr, AnalyzedFactor, AnalyzedProgram, AnalyzedStatement, AnalyzedTerm,
+    AnalyzedFunctionExpr, AnalyzedExpr, AnalyzedFactor, AnalyzedProgram, AnalyzedStatement, AnalyzedTerm,
 };
-use crate::parser::{ExprOperator, TermOperator};
+use crate::parser::{ExprOperator, TermOperator, FunctionOperator};
 use crate::symbol_table::SymbolTable;
+
 
 fn evaluate_factor(variables: &SymbolTable, factor: &AnalyzedFactor) -> f64 {
     match factor {
         AnalyzedFactor::Literal(value) => *value,
         AnalyzedFactor::Identifier(handle) => variables.get_value(*handle),
-        AnalyzedFactor::SubExpression(expr) => evaluate_expr(variables, expr),
+        AnalyzedFactor::SubExpression(expr) => evaluate_function_expr(variables, expr),
     }
 }
 
@@ -36,13 +37,24 @@ fn evaluate_expr(variables: &SymbolTable, expr: &AnalyzedExpr) -> f64 {
     result
 }
 
+fn evaluate_function_expr(variables: &SymbolTable, function_expr: &AnalyzedFunctionExpr) -> f64 {
+    let mut result = evaluate_expr(variables, &function_expr.1);
+    match function_expr.0 {
+            FunctionOperator::Identity => {}, 
+            FunctionOperator::Sin => {result = result.sin()},
+            FunctionOperator::Cos => {result = result.cos()},
+            FunctionOperator::Tan => {result = result.tan()},
+    }
+    result
+}
+
 fn execute_statement(variables: &mut SymbolTable, statement: &AnalyzedStatement) {
     match statement {
         AnalyzedStatement::Assignment(handle, expr) => {
-            variables.set_value(*handle, evaluate_expr(variables, expr));
+            variables.set_value(*handle, evaluate_function_expr(variables, expr));
         }
         AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
-            variables.set_value(*handle, evaluate_expr(variables, expr));
+            variables.set_value(*handle, evaluate_function_expr(variables, expr));
         }
         AnalyzedStatement::Declaration(_) => {}
         AnalyzedStatement::InputOperation(handle) => {
@@ -55,7 +67,7 @@ fn execute_statement(variables: &mut SymbolTable, statement: &AnalyzedStatement)
             variables.set_value(*handle, value);
         }
         AnalyzedStatement::OutputOperation(expr) => {
-            println!("<output>: {}", evaluate_expr(variables, expr));
+            println!("<output>: {}", evaluate_function_expr(variables, expr));
         }
     }
 }

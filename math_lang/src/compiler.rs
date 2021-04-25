@@ -1,7 +1,7 @@
 use crate::analyzer::{
-    AnalyzedExpr, AnalyzedFactor, AnalyzedProgram, AnalyzedStatement, AnalyzedTerm,
+    AnalyzedFunctionExpr, AnalyzedExpr, AnalyzedFactor, AnalyzedProgram, AnalyzedStatement, AnalyzedTerm,
 };
-use crate::parser::{ExprOperator, TermOperator};
+use crate::parser::{ExprOperator, TermOperator, FunctionOperator};
 use crate::symbol_table::SymbolTable;
 
 fn translate_to_rust_factor(variables: &SymbolTable, analyzed_factor: &AnalyzedFactor) -> String {
@@ -9,7 +9,7 @@ fn translate_to_rust_factor(variables: &SymbolTable, analyzed_factor: &AnalyzedF
         AnalyzedFactor::Literal(value) => value.to_string() + "f64",
         AnalyzedFactor::Identifier(handle) => "_".to_string() + &variables.get_name(*handle),
         AnalyzedFactor::SubExpression(expr) => {
-            "(".to_string() + &translate_to_rust_expr(variables, expr) + ")"
+            "(".to_string() + &translate_to_rust_function_expr(variables, expr) + ")"
         }
     }
 }
@@ -58,6 +58,23 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
     result
 }
 
+fn translate_to_rust_function_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedFunctionExpr) -> String {
+    let mut result = translate_to_rust_expr(variables, &analyzed_expr.1);
+    match &analyzed_expr.0 {
+        FunctionOperator::Identity => {} 
+        FunctionOperator::Sin => {
+            result += ".sin()";
+        }
+        FunctionOperator::Cos => {
+            result += ".cos()";
+        }
+        FunctionOperator::Tan => {
+            result += ".tan()";
+        }
+    }
+    result
+}
+
 fn translate_to_rust_statement(
     variables: &SymbolTable,
     analyzed_statement: &AnalyzedStatement,
@@ -67,12 +84,12 @@ fn translate_to_rust_statement(
         AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
             format!("let mut _{} = {}", 
             variables.get_name(*handle), 
-            translate_to_rust_expr(&variables, expr))
+            translate_to_rust_function_expr(&variables, expr))
         }
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",
             variables.get_name(*handle),
-            translate_to_rust_expr(&variables, expr)
+            translate_to_rust_function_expr(&variables, expr)
         ),
         AnalyzedStatement::Declaration(handle) => {
             format!("let mut _{} = 0.0", variables.get_name(*handle))
@@ -83,7 +100,7 @@ fn translate_to_rust_statement(
         AnalyzedStatement::OutputOperation(expr) => format!(
             "println!(\"<output>: {}\", {})",
             "{}",
-            translate_to_rust_expr(&variables, expr)
+            translate_to_rust_function_expr(&variables, expr)
         ),
     }
 }

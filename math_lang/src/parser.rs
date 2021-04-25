@@ -15,7 +15,7 @@ use nom::{
 pub enum ParsedFactor<'a> {
     Literal(f64),
     Identifier(&'a str),
-    SubExpression(Box<ParsedExpr<'a>>),
+    SubExpression(Box<ParsedFunctionExpr<'a>>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -25,6 +25,7 @@ pub enum TermOperator {
     Exponent,
 }
 
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ExprOperator {
     Add,
@@ -32,17 +33,28 @@ pub enum ExprOperator {
     Modulo,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum FunctionOperator {
+    Identity,
+    Sin,
+    Cos,
+    Tan,
+}
+
 pub type ParsedTerm<'a> = (ParsedFactor<'a>, Vec<(TermOperator, ParsedFactor<'a>)>);
 
 pub type ParsedExpr<'a> = (ParsedTerm<'a>, Vec<(ExprOperator, ParsedTerm<'a>)>);
+
+pub type ParsedFunctionExpr<'a> = (FunctionOperator, ParsedExpr<'a>);
+
 
 #[derive(Debug)]
 pub enum ParsedStatement<'a> {
     Declaration(&'a str),
     InputOperation(&'a str),
-    OutputOperation(ParsedExpr<'a>),
-    Assignment(&'a str, ParsedExpr<'a>),
-    DeclarationToAssignment(&'a str, ParsedExpr<'a>),
+    OutputOperation(ParsedFunctionExpr<'a>),
+    Assignment(&'a str, ParsedFunctionExpr<'a>),
+    DeclarationToAssignment(&'a str, ParsedFunctionExpr<'a>),
 }
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
@@ -70,7 +82,7 @@ fn parse_input_statement(input: &str) -> IResult<&str, ParsedStatement> {
 }
 
 fn parse_output_statement(input: &str) -> IResult<&str, ParsedStatement> {
-    tuple((tag("out"), skip_spaces, parse_expr))(input)
+    tuple((tag("out"), skip_spaces, parse_function_expr))(input)
         .map(|(input, output)| (input, ParsedStatement::OutputOperation(output.2)))
 }
 
@@ -80,7 +92,7 @@ fn parse_assignment(input: &str) -> IResult<&str, ParsedStatement> {
         skip_spaces,
         tag("="),
         skip_spaces,
-        parse_expr,
+        parse_function_expr,
     ))(input)
     .map(|(input, output)| (input, ParsedStatement::Assignment(output.0, output.4)))
 }
@@ -93,7 +105,7 @@ fn parse_declaration_to_assigment(input: &str) -> IResult<&str, ParsedStatement>
         skip_spaces,
         tag("="),
         skip_spaces,
-        parse_expr,
+        parse_function_expr,
     ))(input)
     .map(|(input, output)| (input, ParsedStatement::DeclarationToAssignment(output.2, output.6)))
 }
@@ -102,11 +114,12 @@ fn parse_identifier(input: &str) -> IResult<&str, &str> {
     alpha1(input)
 }
 
-fn parse_subexpr(input: &str) -> IResult<&str, ParsedExpr> {
+fn parse_subexpr(input: &str) -> IResult<&str, ParsedFunctionExpr> {
+
     delimited(
         preceded(skip_spaces, char('(')),
-        parse_expr,
-        preceded(skip_spaces, char(')')),
+        parse_function_expr,
+        preceded(skip_spaces, char(')')),   
     )(input)
 }
 
@@ -141,19 +154,33 @@ fn parse_term(input: &str) -> IResult<&str, ParsedTerm> {
 }
 
 fn parse_expr(input: &str) -> IResult<&str, ParsedExpr> {
-    tuple((
-        parse_term,
-        many0(tuple((
-            preceded(
-                skip_spaces,
-                alt((
-                    map(char('+'), |_| ExprOperator::Add),
-                    map(char('-'), |_| ExprOperator::Subtract),
-                    map(tag ("mod"), |_| ExprOperator::Modulo),
-                )),
-            ),
+   
+        tuple((
             parse_term,
-        ))),
+            many0(tuple((
+                preceded(
+                    skip_spaces,
+                    alt((
+                        map(char('+'), |_| ExprOperator::Add),
+                        map(char('-'), |_| ExprOperator::Subtract),
+                        map(tag("mod"), |_| ExprOperator::Modulo),
+                    )),
+                ),
+                parse_term,
+            ))),
+        ))
+    (input)
+}
+
+fn parse_function_expr(input: &str) -> IResult<&str, ParsedFunctionExpr> {
+    tuple((
+        alt((
+            map(tag("sin"), |_| FunctionOperator::Sin),
+            map(tag("cos"), |_| FunctionOperator::Cos),
+            map(tag("tan"), |_| FunctionOperator::Tan),
+            |_| {Ok((input, FunctionOperator::Identity))}, 
+        )),
+        parse_expr,
     ))(input)
 }
 

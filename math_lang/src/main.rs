@@ -4,6 +4,8 @@ mod executor;
 mod parser;
 mod symbol_table;
 
+use crate::symbol_table::SymbolTable;
+
 const MATH_SUFFIX: &str = ".math";
 
 fn main() {
@@ -31,7 +33,7 @@ fn main() {
                 }  
                 None => {
                     eprintln!("Additional argumeng needed: <file.math or string>");
-                    return
+                    return;
                 }
             }        
         }
@@ -41,18 +43,18 @@ fn main() {
                 Some(program) => { interpret(program)},
                 None => {
                     eprintln!("Additional argumeng needed: <file.math or string>");
-                    return
+                    return;
                 }
 
             }
         }
         Some(_) => {
             eprintln!("Command not recognized. Supported commands are --compile <file.math>, --intepret <string> , and --repl");
-            return
+            return;
         }
         None => {
             eprintln!("Additional Command needed. Options are --compile <file.math>, --intepret <string> , and --repl");
-            return
+            return;
         }
     } 
 
@@ -81,7 +83,7 @@ fn process_file(current_program_path: &str, source_path: &str) {
 
     let parsed_program;
     match parser::parse_program(&source_code) {
-        Ok((rest, syntax_tree)) => {
+        Ok((rest, syntax_tree)) => { 
             let trimmed_rest = rest.trim();
             if trimmed_rest.len() > 0 {
                 eprintln!(
@@ -108,7 +110,7 @@ fn process_file(current_program_path: &str, source_path: &str) {
             eprintln!("Invalid code in '{}': {}", source_path, err);
             return;
         }
-    }
+    } 
 
     match std::fs::write(
         &target_path,
@@ -120,19 +122,24 @@ fn process_file(current_program_path: &str, source_path: &str) {
 }
 
 fn interpret(program:&str) {
-    eprintln!("* Interpreting *\n");
+    eprintln!("\n* Interpreting *\n");
 
     let mut variables = symbol_table::SymbolTable::new();
+    initialize_math_constants(&mut variables);
     
     loop  {
         let pattern = parser::parse_program(&program);
         match pattern {
             Ok((rest, parsed_program)) => { 
                 if rest.len() > 0 {
+                    eprintln!("Symbol table: {:#?}", &mut variables); 
                     eprintln!("Unparsed input: `{}`.", rest)
                 } else {
                     match analyzer::analyze_program(&mut variables, &parsed_program) {
                         Ok(analyzed_program) => {
+                            eprintln!("Symbol table: {:#?}", &mut variables); 
+                            eprint!("\n");
+                            eprintln!("Analyzed program: {:#?}", &analyzed_program);
                             executor::execute_program(&mut variables, &analyzed_program);   
                             break;
                         }
@@ -142,12 +149,12 @@ fn interpret(program:&str) {
             }
             Err(err) =>  {eprintln!("Error: {:?}", err); break;},
         } 
-        break;
+        break; 
     }
 }
 
 fn run_interpreter() {
-    eprintln!("* Math Interactive Interpreter *\n");
+    eprintln!("\n* Math Interactive Interpreter *\n");
     let mut variables = symbol_table::SymbolTable::new();
     loop {
         let command = input_command();
@@ -155,7 +162,7 @@ fn run_interpreter() {
             break;
         }
         match command.trim() {
-            "quit" => break,
+            "quit" => {eprintln!("Goodbye"); break},
             "clear" => {
                 variables = symbol_table::SymbolTable::new();
                 eprintln!("Cleared variables.");
@@ -169,12 +176,12 @@ fn run_interpreter() {
             trimmed_command => match parser::parse_program(&trimmed_command) {
                 Ok((rest, parsed_program)) => {
                     if rest.len() > 0 {
-                        eprintln!("Symbol table: {:#?}", &mut variables); 
+                        //eprintln!("Symbol table: {:#?}", &mut variables); 
                         eprintln!("Unparsed input: `{}`.", rest)
                     } else {
                         match analyzer::analyze_program(&mut variables, &parsed_program) {
                             Ok(analyzed_program) => {
-                                println!("Analyzed program: {:#?}", &analyzed_program);
+                                //println!("Analyzed program: {:#?}", &analyzed_program);
                                 executor::execute_program(&mut variables, &analyzed_program)        
                                 
                             }
@@ -182,7 +189,6 @@ fn run_interpreter() {
                         }
                     }
                 }
-               
                 Err(err) =>  eprintln!("Error: {:?}", err),
             },
         }
@@ -198,4 +204,20 @@ fn input_command() -> String {
         .read_line(&mut text)
         .expect("Cannot read line.");
     text
+}
+
+fn initialize_math_constants(variables: &mut SymbolTable) {
+    let pi = String::from("pi");
+    let e = String::from("e"); 
+    match variables.insert_symbol(&pi) {_=> {}}
+    
+    match variables.insert_symbol(&e) {_=> {}}
+    match variables.find_symbol(&pi) {
+        Ok(v) => variables.set_value(v, 3.14159265358979323846),  
+        Err(_) => {}
+    }
+    match variables.find_symbol(&e) {
+        Ok(v) => variables.set_value(v, 2.71828182845904523536),
+        Err(_) => {}
+    }
 }

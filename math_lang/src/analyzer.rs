@@ -1,6 +1,6 @@
 use crate::parser::{
     ExprOperator, ParsedExpr, ParsedFactor, ParsedProgram, ParsedStatement, ParsedTerm,
-    TermOperator,
+    TermOperator, FunctionOperator, ParsedFunctionExpr,
 };
 use crate::symbol_table::SymbolTable;
 
@@ -10,21 +10,23 @@ extern crate nom;
 pub enum AnalyzedFactor {
     Literal(f64),
     Identifier(usize),
-    SubExpression(Box<AnalyzedExpr>),
+    SubExpression(Box<AnalyzedFunctionExpr>),
 }
 
 pub type AnalyzedTerm = (AnalyzedFactor, Vec<(TermOperator, AnalyzedFactor)>);
 
 pub type AnalyzedExpr = (AnalyzedTerm, Vec<(ExprOperator, AnalyzedTerm)>);
 
+pub type AnalyzedFunctionExpr = (FunctionOperator, AnalyzedExpr);
+
 #[derive(Debug)]
 pub enum AnalyzedStatement {
     
     Declaration(usize),
     InputOperation(usize),
-    OutputOperation(AnalyzedExpr),
-    Assignment(usize, AnalyzedExpr),
-    DeclarationToAssignment(usize, AnalyzedExpr),
+    OutputOperation(AnalyzedFunctionExpr),
+    Assignment(usize, AnalyzedFunctionExpr),
+    DeclarationToAssignment(usize, AnalyzedFunctionExpr),
     
 }
 
@@ -51,7 +53,7 @@ fn analyze_factor(
             Ok(AnalyzedFactor::Identifier(variables.find_symbol(name)?))
         }
         ParsedFactor::SubExpression(expr) => Ok(AnalyzedFactor::SubExpression(
-            Box::<AnalyzedExpr>::new(analyze_expr(variables, expr)?),
+            Box::<AnalyzedFunctionExpr>::new(analyze_function_expr(variables, expr)?),
         )),
     }
 }
@@ -80,6 +82,17 @@ fn analyze_expr(
     Ok((first_term, other_terms))
 }
 
+
+fn analyze_function_expr(
+    variables: &mut SymbolTable,
+    parsed_function_expr: &ParsedFunctionExpr,
+) -> Result<AnalyzedFunctionExpr, String> {
+    let function = parsed_function_expr.0;
+    let expr = analyze_expr(variables, &parsed_function_expr.1)?;
+    Ok((function, expr))
+}
+
+
 fn analyze_statement(
     variables: &mut SymbolTable,
     parsed_statement: &ParsedStatement,
@@ -89,12 +102,12 @@ fn analyze_statement(
         ParsedStatement::DeclarationToAssignment(identifier, expr) => {
             variables.insert_symbol(identifier)?;
             let handle = variables.find_symbol(identifier)?;
-            let analyzed_expr = analyze_expr(variables, expr)?;
+            let analyzed_expr = analyze_function_expr(variables, expr)?;
             Ok(AnalyzedStatement::DeclarationToAssignment(handle, analyzed_expr)) 
         }
         ParsedStatement::Assignment(identifier, expr) => {
             let handle = variables.find_symbol(identifier)?;
-            let analyzed_expr = analyze_expr(variables, expr)?;
+            let analyzed_expr = analyze_function_expr(variables, expr)?;
             Ok(AnalyzedStatement::Assignment(handle, analyzed_expr))
         }
         ParsedStatement::Declaration(identifier) => {
@@ -107,9 +120,8 @@ fn analyze_statement(
             Ok(AnalyzedStatement::InputOperation(handle))
         }
         ParsedStatement::OutputOperation(expr) => {
-            let analyzed_expr = analyze_expr(variables, expr)?;
+            let analyzed_expr = analyze_function_expr(variables, expr)?;
             Ok(AnalyzedStatement::OutputOperation(analyzed_expr))
-        }
-       
+        }  
     }
 }
