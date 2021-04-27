@@ -6,11 +6,15 @@ use crate::symbol_table::SymbolTable;
 
 fn translate_to_rust_factor(variables: &SymbolTable, analyzed_factor: &AnalyzedFactor) -> String {
     match analyzed_factor {
-        AnalyzedFactor::Literal(value) => value.to_string() + "f64",
-        AnalyzedFactor::Identifier(handle) => "_".to_string() + &variables.get_name(*handle),
-        AnalyzedFactor::SubExpression(expr) => {
-            "(".to_string() + &translate_to_rust_function_expr(variables, expr) + ")"
+        AnalyzedFactor::FunctionExpression(expr) => {
+            "(".to_string() + &translate_to_rust_function_expr(variables, expr)
         }
+        AnalyzedFactor::Literal(value) => value.to_string() + "f64",
+        AnalyzedFactor::Identifier(handle) => "".to_string() + &variables.get_name(*handle),
+        AnalyzedFactor::SubExpression(expr) => {
+            "(".to_string() + &translate_to_rust_expr(variables, expr) + ")"
+        }
+        
     }
 }
 
@@ -61,16 +65,20 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
 fn translate_to_rust_function_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedFunctionExpr) -> String {
     let mut result = translate_to_rust_expr(variables, &analyzed_expr.1);
     match &analyzed_expr.0 {
-        FunctionOperator::Identity => {} 
-        FunctionOperator::Sin => {
-            result += ".sin()";
-        }
-        FunctionOperator::Cos => {
-            result += ".cos()";
-        }
-        FunctionOperator::Tan => {
-            result += ".tan()";
-        }
+        //FunctionOperator::Identity => {} 
+        FunctionOperator::Sin => {result += ").sin()";}
+        FunctionOperator::Cos => {result += ").cos()";}
+        FunctionOperator::Tan => {result += ").tan()";}
+        FunctionOperator::Exp => {result += ").exp()";}
+        FunctionOperator::Exp2 => {result += ").exp2()";}
+        FunctionOperator::Log => {result += ").ln()";}
+        FunctionOperator::Log10 => {result += ").log10()";}
+        FunctionOperator::Log2 => {result += ").log2()";}
+        FunctionOperator::Abs => {result += ").abs()";}
+        FunctionOperator::Ceil => {result += ").ceil()";}
+        FunctionOperator::Floor => {result += ").floor()";}
+        FunctionOperator::Signum => {result += ").signum()";}
+        FunctionOperator::Sqrt => {result += ").sqrt()";}
     }
     result
 }
@@ -84,12 +92,12 @@ fn translate_to_rust_statement(
         AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
             format!("let mut _{} = {}", 
             variables.get_name(*handle), 
-            translate_to_rust_function_expr(&variables, expr))
+            translate_to_rust_expr(&variables, expr))
         }
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",
             variables.get_name(*handle),
-            translate_to_rust_function_expr(&variables, expr)
+            translate_to_rust_expr(&variables, expr)
         ),
         AnalyzedStatement::Declaration(handle) => {
             format!("let mut _{} = 0.0", variables.get_name(*handle))
@@ -100,7 +108,7 @@ fn translate_to_rust_statement(
         AnalyzedStatement::OutputOperation(expr) => format!(
             "println!(\"<output>: {}\", {})",
             "{}",
-            translate_to_rust_function_expr(&variables, expr)
+            translate_to_rust_expr(&variables, expr)
         ),
     }
 }
@@ -123,7 +131,7 @@ pub fn translate_to_rust_program(
     rust_program += "    text.trim().parse::<f64>().unwrap_or(0.)\n";
     rust_program += "}\n";
     rust_program += "\n";
-    rust_program += "fn main() {\n";
+    rust_program += "fn main() {\n"; 
     for statement in analyzed_program {
         rust_program += "    ";
         rust_program += &translate_to_rust_statement(&variables, statement);

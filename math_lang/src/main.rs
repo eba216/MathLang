@@ -7,6 +7,8 @@ mod symbol_table;
 use crate::symbol_table::SymbolTable;
 
 const MATH_SUFFIX: &str = ".math";
+const PI: f64 = 3.141592653589793115997963468544185161590576171875;
+const EXP: f64 = 2.718281828459045090795598298427648842334747314453125;
 
 fn main() {
 
@@ -123,16 +125,15 @@ fn process_file(current_program_path: &str, source_path: &str) {
 
 fn interpret(program:&str) {
     eprintln!("\n* Interpreting *\n");
-
     let mut variables = symbol_table::SymbolTable::new();
     initialize_math_constants(&mut variables);
-    
+
     loop  {
         let pattern = parser::parse_program(&program);
         match pattern {
             Ok((rest, parsed_program)) => { 
                 if rest.len() > 0 {
-                    eprintln!("Symbol table: {:#?}", &mut variables); 
+                    //eprintln!("Symbol table: {:#?}", &mut variables); 
                     eprintln!("Unparsed input: `{}`.", rest)
                 } else {
                     match analyzer::analyze_program(&mut variables, &parsed_program) {
@@ -156,6 +157,8 @@ fn interpret(program:&str) {
 fn run_interpreter() {
     eprintln!("\n* Math Interactive Interpreter *\n");
     let mut variables = symbol_table::SymbolTable::new();
+    initialize_math_constants(&mut variables);
+    
     loop {
         let command = input_command();
         if command.len() == 0 {
@@ -165,6 +168,7 @@ fn run_interpreter() {
             "quit" => {eprintln!("Goodbye"); break},
             "clear" => {
                 variables = symbol_table::SymbolTable::new();
+                initialize_math_constants(&mut variables);
                 eprintln!("Cleared variables.");
             }
             "variables" => {
@@ -172,6 +176,7 @@ fn run_interpreter() {
                 for v in variables.iter() {
                     eprintln!("  {}: {}", v.0, v.1);
                 }
+                
             }
             trimmed_command => match parser::parse_program(&trimmed_command) {
                 Ok((rest, parsed_program)) => {
@@ -209,15 +214,15 @@ fn input_command() -> String {
 fn initialize_math_constants(variables: &mut SymbolTable) {
     let pi = String::from("pi");
     let e = String::from("e"); 
-    match variables.insert_symbol(&pi) {_=> {}}
     
-    match variables.insert_symbol(&e) {_=> {}}
-    match variables.find_symbol(&pi) {
-        Ok(v) => variables.set_value(v, 3.14159265358979323846),  
-        Err(_) => {}
+    if let Ok(_) = variables.insert_symbol(&pi){}
+    if let Ok(_) = variables.insert_symbol(&e){}
+    
+    if let Ok(v) = variables.find_symbol(&pi) {
+        variables.set_value(v, PI);
     }
-    match variables.find_symbol(&e) {
-        Ok(v) => variables.set_value(v, 2.71828182845904523536),
-        Err(_) => {}
+    if let Ok(v) = variables.find_symbol(&e) {
+        variables.set_value(v,EXP);
     }
+
 }

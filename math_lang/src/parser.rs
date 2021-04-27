@@ -15,7 +15,8 @@ use nom::{
 pub enum ParsedFactor<'a> {
     Literal(f64),
     Identifier(&'a str),
-    SubExpression(Box<ParsedFunctionExpr<'a>>),
+    SubExpression(Box<ParsedExpr<'a>>),
+    FunctionExpression(Box<ParsedFunctionExpr<'a>>)
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -35,10 +36,19 @@ pub enum ExprOperator {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FunctionOperator {
-    Identity,
     Sin,
     Cos,
     Tan,
+    Exp,
+    Exp2,
+    Log,
+    Log10,
+    Log2,
+    Abs,
+    Ceil,
+    Floor,
+    Signum,
+    Sqrt,
 }
 
 pub type ParsedTerm<'a> = (ParsedFactor<'a>, Vec<(TermOperator, ParsedFactor<'a>)>);
@@ -52,9 +62,9 @@ pub type ParsedFunctionExpr<'a> = (FunctionOperator, ParsedExpr<'a>);
 pub enum ParsedStatement<'a> {
     Declaration(&'a str),
     InputOperation(&'a str),
-    OutputOperation(ParsedFunctionExpr<'a>),
-    Assignment(&'a str, ParsedFunctionExpr<'a>),
-    DeclarationToAssignment(&'a str, ParsedFunctionExpr<'a>),
+    OutputOperation(ParsedExpr<'a>),
+    Assignment(&'a str, ParsedExpr<'a>),
+    DeclarationToAssignment(&'a str, ParsedExpr<'a>),
 }
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
@@ -82,7 +92,8 @@ fn parse_input_statement(input: &str) -> IResult<&str, ParsedStatement> {
 }
 
 fn parse_output_statement(input: &str) -> IResult<&str, ParsedStatement> {
-    tuple((tag("out"), skip_spaces, parse_function_expr))(input)
+    //eprintln!("\nParsing out : {}\n", &input);
+    tuple((tag("out"), skip_spaces, parse_expr))(input)
         .map(|(input, output)| (input, ParsedStatement::OutputOperation(output.2)))
 }
 
@@ -92,7 +103,7 @@ fn parse_assignment(input: &str) -> IResult<&str, ParsedStatement> {
         skip_spaces,
         tag("="),
         skip_spaces,
-        parse_function_expr,
+        parse_expr,
     ))(input)
     .map(|(input, output)| (input, ParsedStatement::Assignment(output.0, output.4)))
 }
@@ -105,7 +116,7 @@ fn parse_declaration_to_assigment(input: &str) -> IResult<&str, ParsedStatement>
         skip_spaces,
         tag("="),
         skip_spaces,
-        parse_function_expr,
+        parse_expr,
     ))(input)
     .map(|(input, output)| (input, ParsedStatement::DeclarationToAssignment(output.2, output.6)))
 }
@@ -114,21 +125,25 @@ fn parse_identifier(input: &str) -> IResult<&str, &str> {
     alpha1(input)
 }
 
-fn parse_subexpr(input: &str) -> IResult<&str, ParsedFunctionExpr> {
-
+fn parse_subexpr(input: &str) -> IResult<&str, ParsedExpr> {
     delimited(
         preceded(skip_spaces, char('(')),
-        parse_function_expr,
+        parse_expr,
         preceded(skip_spaces, char(')')),   
     )(input)
 }
 
 fn parse_factor(input: &str) -> IResult<&str, ParsedFactor> {
+    //eprintln!("\nParsing factor : {}\n", &input);
     preceded(
         skip_spaces,
         alt((
+            map(parse_function_expr, |expr| {
+                ParsedFactor::FunctionExpression(Box::new(expr))
+            }),
             map(parse_identifier, ParsedFactor::Identifier),
             map(double, ParsedFactor::Literal),
+            
             map(parse_subexpr, |expr| {
                 ParsedFactor::SubExpression(Box::new(expr))
             }),
@@ -137,6 +152,7 @@ fn parse_factor(input: &str) -> IResult<&str, ParsedFactor> {
 }
 
 fn parse_term(input: &str) -> IResult<&str, ParsedTerm> {
+    //eprintln!("\nParsing term : {}\n", &input);
     tuple((
         parse_factor,
         many0(tuple((
@@ -154,7 +170,7 @@ fn parse_term(input: &str) -> IResult<&str, ParsedTerm> {
 }
 
 fn parse_expr(input: &str) -> IResult<&str, ParsedExpr> {
-   
+    //eprintln!("\nParsing expression : {}\n", &input);
         tuple((
             parse_term,
             many0(tuple((
@@ -173,14 +189,24 @@ fn parse_expr(input: &str) -> IResult<&str, ParsedExpr> {
 }
 
 fn parse_function_expr(input: &str) -> IResult<&str, ParsedFunctionExpr> {
+    //eprintln!("\nParsing function : {}\n", &input);
     tuple((
         alt((
             map(tag("sin"), |_| FunctionOperator::Sin),
             map(tag("cos"), |_| FunctionOperator::Cos),
             map(tag("tan"), |_| FunctionOperator::Tan),
-            |_| {Ok((input, FunctionOperator::Identity))}, 
+            map(tag("2p"), |_| FunctionOperator::Exp2),
+            map(tag("exp"), |_| FunctionOperator::Exp),
+            map(tag("ln"), |_| FunctionOperator::Log),
+            map(tag("log"), |_| FunctionOperator::Log10),
+            map(tag("lg"), |_| FunctionOperator::Log2), 
+            map(tag("abs"), |_| FunctionOperator::Abs), 
+            map(tag("ceil"), |_| FunctionOperator::Ceil), 
+            map(tag("floor"), |_| FunctionOperator::Floor), 
+            map(tag("sgn"), |_| FunctionOperator::Signum), 
+            map(tag("sqrt"), |_| FunctionOperator::Sqrt), 
         )),
-        parse_expr,
+        parse_subexpr,
     ))(input)
 }
 
