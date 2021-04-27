@@ -11,15 +11,15 @@ fn input() -> f64 {
     text.trim().parse::<f64>().unwrap_or(0.)
 }
 
-
 fn main() {
-    let mut _a = 5f64;
-    let mut _b = 0.0;
-    _b = input();
+    let mut a = 5f64;
+    let mut b = 0.0;
+    b = input();
     println!("<output>: {}", a + b);
-    let mut _c = a + 5f64 * (1f64 + b);
+    let mut c = a + 5f64 * (1f64 + b);
     println!("<output>: {}", c);
-    let mut _d = 1f64 / ((a).sin() + 2f64.pow((b).sqrt() - 3f64)) % c;
+    let mut d = 1f64 / ((a).sin() + 2f64.pow((b).sqrt() - 3f64)) % c;
     println!("<output>: {}", d);
     println!("<output>: {}", (d).log10());
+    println!("<output>: {}", ((2f64) - ((pi * e).sin()).abs() + (2f64 + (pi / 4f64).tan()).ln()).floor());
 }

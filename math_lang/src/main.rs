@@ -104,6 +104,8 @@ fn process_file(current_program_path: &str, source_path: &str) {
 
     let analyzed_program;
     let mut variables = symbol_table::SymbolTable::new();
+    initialize_math_constants(&mut variables);
+    
     match analyzer::analyze_program(&mut variables, &parsed_program) {
         Ok(analyzed_tree) => {
             analyzed_program = analyzed_tree;

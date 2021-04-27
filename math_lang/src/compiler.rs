@@ -90,20 +90,20 @@ fn translate_to_rust_statement(
     match analyzed_statement {
         
         AnalyzedStatement::DeclarationToAssignment(handle, expr) => {
-            format!("let mut _{} = {}", 
+            format!("let mut {} = {}", 
             variables.get_name(*handle), 
             translate_to_rust_expr(&variables, expr))
         }
         AnalyzedStatement::Assignment(handle, expr) => format!(
-            "_{} = {}",
+            "{} = {}",
             variables.get_name(*handle),
             translate_to_rust_expr(&variables, expr)
         ),
         AnalyzedStatement::Declaration(handle) => {
-            format!("let mut _{} = 0.0", variables.get_name(*handle))
+            format!("let mut {} = 0.0", variables.get_name(*handle))
         }
         AnalyzedStatement::InputOperation(handle) => {
-            format!("_{} = input()", variables.get_name(*handle))
+            format!("{} = input()", variables.get_name(*handle))
         }
         AnalyzedStatement::OutputOperation(expr) => format!(
             "println!(\"<output>: {}\", {})",

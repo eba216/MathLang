@@ -1,0 +1,13 @@
+var a = 5
+var b
+in b
+out a + b
+var c = a + 5*(1 + b)
+out c
+
+var d= 1/(sin(a) + 2^( sqrt(b)-3)) mod c 
+out d
+
+out log(d)
+
+out floor( (2) - abs(sin(pi*e))+ ln(2 + tan(pi/4)))
