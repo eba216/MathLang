@@ -10,4 +10,4 @@ out d
 
 out log(d)
 
-out floor( (2) - abs(sin(pi*e))+ ln(2 + tan(pi/4)))
+out floor ( 2  - abs ( sin( pi*e))+ ln(2 + atanh( pi/4)    ) )  

@@ -21,5 +21,5 @@ fn main() {
     let mut d = 1f64 / ((a).sin() + 2f64.pow((b).sqrt() - 3f64)) % c;
     println!("<output>: {}", d);
     println!("<output>: {}", (d).log10());
-    println!("<output>: {}", ((2f64) - ((pi * e).sin()).abs() + (2f64 + (pi / 4f64).tan()).ln()).floor());
+    println!("<output>: {}", (2f64 - ((pi * e).sin()).abs() + (2f64 + (pi / 4f64).atanh()).ln()).floor());
 }

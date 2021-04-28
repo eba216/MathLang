@@ -65,10 +65,18 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
 fn translate_to_rust_function_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedFunctionExpr) -> String {
     let mut result = translate_to_rust_expr(variables, &analyzed_expr.1);
     match &analyzed_expr.0 {
-        //FunctionOperator::Identity => {} 
         FunctionOperator::Sin => {result += ").sin()";}
         FunctionOperator::Cos => {result += ").cos()";}
         FunctionOperator::Tan => {result += ").tan()";}
+        FunctionOperator::ArcSin => {result += ").asin()";}
+        FunctionOperator::ArcCos => {result += ").acos()";}
+        FunctionOperator::ArcTan => {result += ").atan()";}
+        FunctionOperator::Sinh => {result += ").sinh()";}
+        FunctionOperator::Cosh => {result += ").cosh()";}
+        FunctionOperator::Tanh => {result += ").tanh()";}
+        FunctionOperator::ArcSinh => {result += ").asinh()";}
+        FunctionOperator::ArcCosh => {result += ").acosh()";}
+        FunctionOperator::ArcTanh => {result += ").atanh()";}
         FunctionOperator::Exp => {result += ").exp()";}
         FunctionOperator::Exp2 => {result += ").exp2()";}
         FunctionOperator::Log => {result += ").ln()";}

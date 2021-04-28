@@ -42,10 +42,18 @@ fn evaluate_expr(variables: &SymbolTable, expr: &AnalyzedExpr) -> f64 {
 fn evaluate_function_expr(variables: &SymbolTable, function_expr: &AnalyzedFunctionExpr) -> f64 {
     let mut result = evaluate_expr(variables, &function_expr.1);
     match function_expr.0 {
-            //FunctionOperator::Identity => {}, 
             FunctionOperator::Sin => {result = result.sin()},
             FunctionOperator::Cos => {result = result.cos()},
             FunctionOperator::Tan => {result = result.tan()},
+            FunctionOperator::ArcSin => {result = result.asin()},
+            FunctionOperator::ArcCos => {result = result.acos()},
+            FunctionOperator::ArcTan => {result = result.atan()},
+            FunctionOperator::Sinh => {result = result.sinh()},
+            FunctionOperator::Cosh => {result = result.cosh()},
+            FunctionOperator::Tanh => {result = result.tanh()},
+            FunctionOperator::ArcSinh => {result = result.asinh()},
+            FunctionOperator::ArcCosh => {result = result.acosh()},
+            FunctionOperator::ArcTanh => {result = result.atanh()},
             FunctionOperator::Exp2 => {result = result.exp2()},
             FunctionOperator::Exp => {result = result.exp()},
             FunctionOperator::Log => {result = result.ln()},
@@ -56,7 +64,6 @@ fn evaluate_function_expr(variables: &SymbolTable, function_expr: &AnalyzedFunct
             FunctionOperator::Floor => {result = result.floor()},
             FunctionOperator::Signum => {result = result.signum()},
             FunctionOperator::Sqrt => {result = result.sqrt()},
-
     }
     result
 }

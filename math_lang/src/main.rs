@@ -7,8 +7,8 @@ mod symbol_table;
 use crate::symbol_table::SymbolTable;
 
 const MATH_SUFFIX: &str = ".math";
-const PI: f64 = 3.141592653589793115997963468544185161590576171875;
-const EXP: f64 = 2.718281828459045090795598298427648842334747314453125;
+const PI: f64 = 3.1415926535897931;
+const EXP: f64 = 2.7182818284590451;
 
 fn main() {
 
@@ -34,7 +34,7 @@ fn main() {
                     }
                 }  
                 None => {
-                    eprintln!("Additional argumeng needed: <file.math or string>");
+                    eprintln!("Additional argumeng needed: <file.math>");
                     return;
                 }
             }        
@@ -44,18 +44,39 @@ fn main() {
             match program.as_deref() {
                 Some(program) => { interpret(program)},
                 None => {
-                    eprintln!("Additional argumeng needed: <file.math or string>");
+                    eprintln!("Additional argumeng needed: <string>");
                     return;
                 }
 
             }
         }
+        Some("--run") => {
+            let source_path = args.next();
+            
+            match source_path.as_deref() {
+                Some(file) => { 
+                    if file.ends_with(MATH_SUFFIX) {
+                        run_file(&current_program_path, &source_path.unwrap());    
+                    } else {
+                        eprintln!(
+                            "{}: Invalid argument '{}': It must end with {}",
+                            current_program_path, file, MATH_SUFFIX
+                        );
+                        return;
+                    }
+                }  
+                None => {
+                    eprintln!("Additional argumeng needed: <file.math>");
+                    return;
+                }
+            }
+        }
         Some(_) => {
-            eprintln!("Command not recognized. Supported commands are --compile <file.math>, --intepret <string> , and --repl");
+            eprintln!("Command not recognized. Supported commands are --run <file.math>, --compile <file.math>, --intepret <string> , and --repl");
             return;
         }
         None => {
-            eprintln!("Additional Command needed. Options are --compile <file.math>, --intepret <string> , and --repl");
+            eprintln!("Additional Command needed. Options are --run <file.math>, --compile <file.math>, --intepret <string> , and --repl");
             return;
         }
     } 
@@ -85,7 +106,7 @@ fn process_file(current_program_path: &str, source_path: &str) {
 
     let parsed_program;
     match parser::parse_program(&source_code) {
-        Ok((rest, syntax_tree)) => { 
+        Ok((rest, syntax_tree)) => {
             let trimmed_rest = rest.trim();
             if trimmed_rest.len() > 0 {
                 eprintln!(
@@ -129,7 +150,8 @@ fn interpret(program:&str) {
     eprintln!("\n* Interpreting *\n");
     let mut variables = symbol_table::SymbolTable::new();
     initialize_math_constants(&mut variables);
-
+    let program = program.trim();
+    
     loop  {
         let pattern = parser::parse_program(&program);
         match pattern {
@@ -140,9 +162,9 @@ fn interpret(program:&str) {
                 } else {
                     match analyzer::analyze_program(&mut variables, &parsed_program) {
                         Ok(analyzed_program) => {
-                            eprintln!("Symbol table: {:#?}", &mut variables); 
-                            eprint!("\n");
-                            eprintln!("Analyzed program: {:#?}", &analyzed_program);
+                            //eprintln!("Symbol table: {:#?}", &mut variables); 
+                            //eprint!("\n");
+                            //eprintln!("Analyzed program: {:#?}", &analyzed_program);
                             executor::execute_program(&mut variables, &analyzed_program);   
                             break;
                         }
@@ -154,6 +176,29 @@ fn interpret(program:&str) {
         } 
         break; 
     }
+}
+
+fn run_file(current_program_path: &str, source_path: &str) {
+    
+    if !source_path.ends_with(MATH_SUFFIX) {
+        eprintln!(
+            "{}: Invalid argument '{}': It must end with {}",
+            current_program_path, source_path, MATH_SUFFIX
+        );
+        return;
+    }
+    let source_code = std::fs::read_to_string(&source_path);
+    if source_code.is_err() {
+        eprintln!(
+            "Failed to read from file {}: ({})",
+            source_path,
+            source_code.unwrap_err()
+        );
+        return;
+    }
+    let source_code = source_code.unwrap();
+    let source_code = source_code.trim();
+    interpret(&source_code)
 }
 
 fn run_interpreter() {
